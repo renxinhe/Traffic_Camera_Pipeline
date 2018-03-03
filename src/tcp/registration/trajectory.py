@@ -120,6 +120,10 @@ class Trajectory():
         state = self.list_of_states[-1]
         return state['pose']
 
+    def get_last_state_timestep(self):
+        state = self.list_of_states[-1]
+        return state['timestep']
+
 
     def append_to_trajectory(self,datum):
         '''

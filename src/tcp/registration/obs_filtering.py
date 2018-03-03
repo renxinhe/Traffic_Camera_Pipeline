@@ -94,16 +94,30 @@ class ObsFiltering():
         '''
 
         for obj in frame:
-            if  obj['is_initial_state']:
+            # if  obj['is_initial_state']:
+            #     new_trajectory = Trajectory(obj,self.config)
+            #     self.trajectories.append(new_trajectory)
+            # else:
+            traj = self.select_highest_proposal(obj)
+            # assert traj is not None, 'No existing trajectories to append to.'
+            if traj is not None:
+                # If obj is too far from traj, make new trajectory
+                last_traj_x, last_traj_y = traj.return_last_state_pos()
+                obj_x, obj_y = obj['pose']
+                dist = np.sqrt((1.0 * last_traj_x - obj_x) ** 2 + (1.0 * last_traj_y - obj_y) ** 2)
+
+                DIST_THRESHOLD = 30 # in pixel distance
+                if dist > DIST_THRESHOLD:
+                    new_trajectory = Trajectory(obj,self.config)
+                    self.trajectories.append(new_trajectory)
+                    pass
+                else:
+                    traj.append_to_trajectory(obj)
+            else:
                 new_trajectory = Trajectory(obj,self.config)
                 self.trajectories.append(new_trajectory)
-            else:
-                traj = self.select_highest_proposal(obj)
-                # assert traj is not None, 'No existing trajectories to append to.'
-                if traj is not None:
-                    traj.append_to_trajectory(obj)
 
-
+                    
     def heuristic_label(self, trajectories):
 
         ''''
