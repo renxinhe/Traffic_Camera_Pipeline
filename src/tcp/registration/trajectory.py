@@ -3,7 +3,7 @@ import copy
 import IPython
 
 from scipy.stats import multivariate_normal
-from scipy.interpolate import splprep, splev
+from scipy.interpolate import splprep, splev, interp1d
 from scipy.ndimage import gaussian_filter1d
 
 from tcp.utils.utils import compute_angle, measure_probability, is_valid_lane_change
@@ -276,4 +276,35 @@ class Trajectory():
         x_new, y_new = splev(u_new, self.tck)
         x_new = gaussian_filter1d(x_new, sigma)
         y_new = gaussian_filter1d(y_new, sigma)
+        return x_new, y_new
+
+    def fit_to_polynomial(self):
+        valid_poses = np.array([state_dict['pose'] for state_dict in sorted(self.get_valid_states(), key=lambda x: x['timestep'])])
+
+        self.xs = [x for x, y in valid_poses]
+        self.ys = [y for x, y in valid_poses]
+
+        if len(valid_poses) == 0:
+            return None, None
+
+        num_points = len(self.xs)
+
+        x_coeffs = np.polyfit(np.linspace(0.0, 1.0, num_points), self.xs, 3)
+        y_coeffs = np.polyfit(np.linspace(0.0, 1.0, num_points), self.ys, 3)
+
+        return x_coeffs, y_coeffs
+
+    def get_smoothed_polynomial_points(self, sigma=75):
+        x_coeffs, y_coeffs = self.fit_to_polynomial()
+
+        u_new = np.linspace(0.0, 1.0, 1000)
+
+        x_poly = np.poly1d(x_coeffs)
+        y_poly = np.poly1d(y_coeffs)
+
+        x_new = x_poly(u_new)
+        y_new = y_poly(u_new)
+        x_new = gaussian_filter1d(x_new, sigma)
+        y_new = gaussian_filter1d(y_new, sigma)
+
         return x_new, y_new

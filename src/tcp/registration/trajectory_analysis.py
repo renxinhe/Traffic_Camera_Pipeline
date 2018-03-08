@@ -33,7 +33,7 @@ class TrajectoryAnalysis:
         valid_states = trajectory.get_valid_states()
         if len(valid_states) < 20:
             print 'Trajectory too short with length %d' % len(valid_states)
-            return None
+            return 'too short'
 
         x_new, y_new = trajectory.get_smoothed_spline_points()
         if x_new is None or y_new is None:
@@ -90,8 +90,12 @@ class TrajectoryAnalysis:
             return 'u-turn'
 
 
-    def visualize_trajectory(self, trajectory):
-        x_new, y_new = trajectory.get_smoothed_spline_points()
+    def visualize_trajectory(self, trajectory, use_spline=True):
+        if use_spline:
+            x_new, y_new = trajectory.get_smoothed_spline_points()
+        else:
+            x_new, y_new = trajectory.get_smoothed_polynomial_points()
+        
         if x_new is not None and y_new is not None:
             plt.figure(figsize=(8, 8))
             axes = plt.gca()
