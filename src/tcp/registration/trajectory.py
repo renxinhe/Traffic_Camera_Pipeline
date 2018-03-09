@@ -279,12 +279,14 @@ class Trajectory():
         return x_new, y_new
 
     def fit_to_polynomial(self):
+        xs, ys = self.get_smoothed_spline_points()
+
         valid_poses = np.array([state_dict['pose'] for state_dict in sorted(self.get_valid_states(), key=lambda x: x['timestep'])])
 
         self.xs = [x for x, y in valid_poses]
         self.ys = [y for x, y in valid_poses]
 
-        if len(valid_poses) == 0:
+        if xs is None or ys is None:
             return None, None
 
         num_points = len(self.xs)

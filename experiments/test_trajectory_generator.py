@@ -22,10 +22,10 @@ hm = Homography(cnfg)
 of = ObsFiltering(cnfg)
 ta = TrajectoryAnalysis(cnfg)
 
-def sample_trajectory(start_lane_index, primitive, traj_generator_model, sigma=75):
+def sample_trajectory(start_lane_index, primitive, traj_generator_model, sigma=150, mixing_param=0.1):
     mean, cov = traj_generator_model[start_lane_index][primitive]
-    sample = np.random.multivariate_normal(mean, cov)
-
+    sample = np.random.multivariate_normal(mean, mixing_param * cov + (1 - mixing_param) * np.eye(8))
+    
     x_coeffs = sample[:4]
     y_coeffs = sample[4:]
 
@@ -75,8 +75,15 @@ def compute_distance(traj, traj_generator_model):
 traj_generator_model = pickle.load(open('{0}/{1}'.format(cnfg.save_debug_pickles_path, 'traj_generator_model.pkl'), 'r'))
 held_out_traj_dict = pickle.load(open('{0}/{1}'.format(cnfg.save_debug_pickles_path, 'held_out_traj_by_primitive.pkl'), 'r'))
 
-# for _ in range(5):
-#     sample_trajectory(5, 'forward', traj_generator_model)
+# for i in range(5):
+#     compute_distance(held_out_traj_dict[3]['left'][0], traj_generator_model)
 
-for i in range(5):
-    print(compute_distance(held_out_traj_dict[7]['left'][i], traj_generator_model))
+start_lane_indexes = [1, 3, 5, 7]
+primitives = ['left', 'forward', 'right']
+
+for start_lane_index in start_lane_indexes:
+    for primitive in primitives:
+        print start_lane_index, primitive
+
+        for i in range(3):
+            print(compute_distance(held_out_traj_dict[start_lane_index][primitive][i], traj_generator_model))

@@ -87,7 +87,7 @@ for video_path in sorted(videos):
         continue
     # Setting last video
     if tmp_time > 271300:
-    # if tmp_time > 270930:
+    # if tmp_time > 270905:
         break
 
     print 'Analyzing video: %s' % video_path
@@ -115,8 +115,10 @@ for video_path in sorted(videos):
             if primitive is not None and\
                 traj_dict[start_lane_index].get(primitive) is not None:
 
-                # visualize_trajectory(x_coeffs, y_coeffs)
                 traj_dict[start_lane_index][primitive].append(traj)
+
+                # x_coeffs, y_coeffs = traj.fit_to_polynomial()
+                # visualize_trajectory(x_coeffs, y_coeffs)
 
 # Save all trajectories grouped by primitive action.
 with open(os.path.join(cnfg.save_debug_pickles_path, 'traj_by_primitive.pkl'), 'w+') as pkl_file:
