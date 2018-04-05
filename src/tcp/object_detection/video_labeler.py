@@ -10,7 +10,12 @@ import cPickle as pickle
 from urlparse import parse_qs
 
 from AbstractDetector import AbstractDetector
-from ssd_detector import SSD_VGG16Detector 
+from ssd_detector import SSD_VGG16Detector
+
+import tcp.object_detection.Re3 as Re3
+sys.path.insert(0, os.path.dirname(Re3.__file__))
+from Re3.tracker import re3_tracker
+
 from tcp.object_detection.cropper import Cropper
 
 from tcp.object_detection.init_labeler import InitLabeler
