@@ -17,10 +17,11 @@ class Config(object):
         self.STREAM_OUTPUT_SEGMENT_TIME_LIMIT = 60  # approximate length of video segments in seconds
         self.STREAM_OUTPUT_DIR_SIZE_LIMIT = 1e10    # maximum size limit for downloaded video in bytes
 
-        self.check_point_path = 'Checkpoints/VGG_VOC0712_SSD_300x300_ft_iter_120000.ckpt'
-        self.video_root_dir = '/nfs/diskstation/jren/alberta_cam/'
-        self.save_debug_img_path = '/media/autolab/1tb/data/traffic_camera_pipeline/Debug_Imgs'
-        self.save_debug_pickles_path = '/nfs/diskstation/jren/tcp_alberta_cam_pickles_oct27/'
+        self.ssd_checkpoint_path = 'Checkpoints/SSD_checkpoint/VGG_VOC0712_SSD_300x300_ft_iter_120000.ckpt'
+        self.re3_checkpoint_dir = 'Checkpoints/Re3_checkpoint'
+        self.video_root_dir = 'Videos'
+        self.save_debug_img_path = 'Debug_Imgs'
+        self.save_debug_pickles_path = 'Debug_Pickles'
         self.car_crop_image_path = 'alberta_car_crop_image.png'
         self.pedestrian_crop_image_path = 'alberta_pedestrian_crop_image.png'
 

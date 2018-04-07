@@ -29,7 +29,7 @@ class VideoLabeler():
 
         self.config = config
         self.cropper = Cropper(self.config)
-        self.ssd_detector = SSD_VGG16Detector('ssd_vgg16', self.config.check_point_path, cropper=self.cropper)
+        self.ssd_detector = SSD_VGG16Detector('ssd_vgg16', self.config.ssd_checkpoint_path, cropper=self.cropper)
 
     def __del__(self):
         self.close_video()

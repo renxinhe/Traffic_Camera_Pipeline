@@ -28,7 +28,7 @@ from constants import MAX_TRACK_LENGTH
 SPEED_OUTPUT = True
 
 class Re3TrackerFactory(object):
-    def __init__(self, gpu_id=GPU_ID):
+    def __init__(self, config, gpu_id=GPU_ID):
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
         tf.Graph().as_default()
         config = tf.ConfigProto()
@@ -43,7 +43,7 @@ class Re3TrackerFactory(object):
         if not self.is_initialized:
             basedir = os.path.dirname(__file__)
             # ckpt = tf.train.get_checkpoint_state(os.path.join(basedir, '..', LOG_DIR, 'checkpoints'))
-            ckpt = tf.train.get_checkpoint_state('/media/autolab/1tb/data/re3_checkpoints')
+            ckpt = tf.train.get_checkpoint_state(config.re3_checkpoint_dir)
             tf_util.restore(self.sess, ckpt.model_checkpoint_path)
             self.is_initialized = True
         return tracker
