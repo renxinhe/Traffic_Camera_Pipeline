@@ -76,13 +76,13 @@ def bboxes_draw_on_img(img, classes, scores, bboxes, colors, thickness=2):
     bboxes = np.array(bboxes)
     for i in range(bboxes.shape[0]):
         bbox = bboxes[i]
-        color = colors[classes[i]]
+        color = colors[int(classes[i])]
         # Draw bounding box...
         p1 = (int(bbox[0] * width), int(bbox[1] * height))
         p2 = (int(bbox[2] * width), int(bbox[3] * height))
         cv2.rectangle(img, p1[::], p2[::], color, thickness)
         # Draw text...
-        s = '%s/%.3f' % (classes[i], scores[i])
+        s = '%s/%s' % (classes[i], scores[i])
         p1 = (p1[0], p1[1]-5)
         cv2.putText(img, s, p1[::], cv2.FONT_HERSHEY_DUPLEX, 0.4, color, 1)
 

@@ -131,6 +131,63 @@ def on_uds_crosswalk(pose):
     return in_bound(pose[0], (380, 620)) and in_bound(pose[1], (380, 620))\
         and not (in_bound(pose[0], (420, 580)) and in_bound(pose[1], (420, 580)))
 
+def bbox_IoU(boxA, boxB):
+    # determine the (x, y)-coordinates of the intersection rectangle
+    xA = max(boxA[0], boxB[0])
+    yA = max(boxA[1], boxB[1])
+    xB = min(boxA[2], boxB[2])
+    yB = min(boxA[3], boxB[3])
+ 
+    # compute the area of intersection rectangle
+    interArea = (xB - xA + 1) * (yB - yA + 1)
+ 
+    # compute the area of both the prediction and ground-truth
+    # rectangles
+    boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
+    boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
+ 
+    # compute the intersection over union by taking the intersection
+    # area and dividing it by the sum of prediction + ground-truth
+    # areas - the interesection area
+    iou = interArea / float(boxAArea + boxBArea - interArea)
+ 
+    # return the intersection over union value
+    return iou
+
+def normalize_bbox(bbox, img_dim):
+    """
+    Normalizes bounding box coordinates to [0,1].
+
+    bbox: [x1, y1, x2, y2]
+    img_dim: [width, height]
+    """
+    bbox = list(bbox)
+    bbox[0] /= img_dim[0]
+    bbox[1] /= img_dim[1]
+    bbox[2] /= img_dim[0]
+    bbox[3] /= img_dim[1]
+    return bbox
+
+def denormalize_bbox(bbox, img_dim):
+    """
+    Denormalizes bounding box coordinates to pixel range.
+
+    bbox: [x1, y1, x2, y2]
+    img_dim: [width, height]
+    """
+    bbox = list(bbox)
+    bbox[0] *= img_dim[0]
+    bbox[1] *= img_dim[1]
+    bbox[2] *= img_dim[0]
+    bbox[3] *= img_dim[1]
+    return bbox
+
+def bbox_near_margin(bbox, img_dim, margin=5):
+    return bbox[0] < margin or\
+           bbox[1] < margin or\
+           bbox[2] > img_dim[0] - margin or\
+           bbox[3] > img_dim[1] - margin
+
 
 ######CRUDE TEST CASES##########
 

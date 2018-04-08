@@ -6,6 +6,7 @@ import time
 import cv2
 import youtube_dl
 import numpy as np
+import tensorflow as tf
 import cPickle as pickle
 from urlparse import parse_qs
 
@@ -21,6 +22,8 @@ from tcp.object_detection.cropper import Cropper
 from tcp.object_detection.init_labeler import InitLabeler
 from tcp.object_detection.init_labeler_opencv import InitLabeler_OpenCV
 from tcp.object_detection.visualization import colors_tableau, bboxes_draw_on_img
+
+from tcp.utils.utils import bbox_IoU, normalize_bbox, denormalize_bbox, bbox_near_margin
 
 
 class VideoLabeler():
@@ -176,6 +179,87 @@ class VideoLabeler():
         self.ssd_detector.cap.release()
         
         return trajectory
+
+    def generate_re3_trajectories(self, all_rbboxes=None, all_rclasses=None, threshold_IoU=0.5, save_images=False):
+        frame_i = 0
+
+        all_rbboxes = self.all_rbboxes if all_rbboxes is None else all_rbboxes
+        all_rclasses = self.all_rclasses if all_rclasses is None else all_rclasses
+        assert len(all_rbboxes) == len(all_rclasses)
+
+        trajectory = []
+
+        tf.reset_default_graph()
+        tracker = re3_tracker.Re3Tracker(self.config)
+        traj_ids = []
+        traj_counts = {}
+
+        self.ssd_detector.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+        while self.ssd_detector.cap.isOpened():
+            ret, frame = self.ssd_detector.cap.read()
+            if frame is None:
+                break
+
+            # Process frame here
+            rbboxes = all_rbboxes[frame_i]
+            rclasses = all_rclasses[frame_i]
+            rbboxes_in_frame_i = []
+            rclasses_in_frame_i = []
+
+            traj_ids_keep = []
+            if frame_i % 100 == 0:
+                print '\nProcessing frame %d' % frame_i
+            for traj_id in traj_ids:
+                tracked_bbox = tracker.track(traj_id, frame)
+                denormed_tracked_bbox = list(tracked_bbox)
+                # print 'tracker tracked_bbox', traj_id, tracked_bbox
+                tracked_bbox = normalize_bbox(tracked_bbox, self.config.img_dim)
+
+                # Find index of tracked bboxes to remove
+                rbboxes_new_track_index = list(range(len(rbboxes)))
+                for i, rbbox in enumerate(rbboxes):
+                    if bbox_IoU(rbbox, tracked_bbox) >= threshold_IoU:
+                        if i in rbboxes_new_track_index:
+                            rbboxes_new_track_index.remove(i)
+                rbboxes = np.array(rbboxes)[rbboxes_new_track_index].tolist()
+                rclasses = np.array(rclasses)[rbboxes_new_track_index].tolist()
+
+                # Remove tracks outside of crop zone
+                traj_rclass = traj_id.split('_')[0]
+                if not bbox_near_margin(denormed_tracked_bbox, self.config.img_dim)\
+                   and self.cropper.check_is_valid(traj_rclass, *tracked_bbox):
+                    traj_ids_keep.append(traj_id)
+                    rbboxes_in_frame_i.append(tracked_bbox)
+                    rclasses_in_frame_i.append(traj_rclass)
+            traj_ids = traj_ids_keep
+            # print 'rbboxes', rbboxes
+            
+            # Track new bboxes
+            for i, rbbox in enumerate(rbboxes):
+                rclass = rclasses[i]
+                if rclass in traj_counts:
+                    traj_counts[rclass] += 1
+                else:
+                    traj_counts[rclass] = 1
+                new_traj_id = '%s_%s' % (rclass, traj_counts[rclass])
+                traj_ids.append(new_traj_id)
+
+                denormed_rbbox = denormalize_bbox(rbbox, self.config.img_dim)
+                # print 'new tracked_bbox', new_traj_id, denormed_rbbox
+
+                tracker.track(new_traj_id, frame, denormed_rbbox)
+                rbboxes_in_frame_i.append(rbbox)
+                rclasses_in_frame_i.append(rclass)
+
+            if save_images:
+                debug_img_path = os.path.join(self.config.save_debug_img_path, self.video_name)
+                if not os.path.exists(debug_img_path):
+                    os.makedirs(debug_img_path)
+                assert len(rbboxes_in_frame_i) == len(rclasses_in_frame_i)
+                bboxes_draw_on_img(frame, rclasses_in_frame_i, traj_ids, rbboxes_in_frame_i, colors_tableau)
+                cv2.imwrite(os.path.join(debug_img_path, '%s_%07d.jpg' % (self.video_name, frame_i)), frame)
+
+            frame_i += 1
 
 
     def get_car_cords(self, frame_i, rclasses, rbboxes):

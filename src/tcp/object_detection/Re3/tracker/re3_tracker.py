@@ -24,10 +24,10 @@ from constants import LOG_DIR
 from constants import GPU_ID
 from constants import MAX_TRACK_LENGTH
 
-SPEED_OUTPUT = True
+SPEED_OUTPUT = False
 
 class Re3Tracker(object):
-    def __init__(self, config, gpu_id=GPU_ID):
+    def __init__(self, tcp_config, gpu_id=GPU_ID):
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
         basedir = os.path.dirname(__file__)
         tf.Graph().as_default()
@@ -40,7 +40,7 @@ class Re3Tracker(object):
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True
         self.sess = tf.Session(config=config)
-        ckpt = tf.train.get_checkpoint_state(config.re3_checkpoint_dir)
+        ckpt = tf.train.get_checkpoint_state(tcp_config.re3_checkpoint_dir)
         if ckpt is None:
             raise IOError(
                     ('Checkpoint model could not be found. '

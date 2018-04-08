@@ -36,7 +36,6 @@ class Cropper():
         x_max = int(self.config.img_dim[0] * x_max)
         y_max = int(self.config.img_dim[1] * y_max)
 
-        # import pdb; pdb.set_trace()
         crop_mask = None
         full_mask = None
         # 6: bus, 7: car, 14: motorcycle
