@@ -21,7 +21,7 @@ from tcp.object_detection.cropper import Cropper
 
 from tcp.object_detection.init_labeler import InitLabeler
 from tcp.object_detection.init_labeler_opencv import InitLabeler_OpenCV
-from tcp.object_detection.visualization import colors_tableau, bboxes_draw_on_img
+from tcp.object_detection.visualization import bboxes_draw_on_img, colors_original, colors_dark
 
 from tcp.utils.utils import bbox_IoU, normalize_bbox, denormalize_bbox, bbox_near_margin
 
@@ -142,7 +142,7 @@ class VideoLabeler():
                 debug_img_path = os.path.join(self.config.save_debug_img_path, self.video_name)
                 if not os.path.exists(debug_img_path):
                     os.makedirs(debug_img_path)
-                bboxes_draw_on_img(frame, rclasses, [1.0] * len(rclasses), rbboxes, colors_tableau)
+                bboxes_draw_on_img(frame, rclasses, [1.0] * len(rclasses), rbboxes, colors_dark)
                 cv2.imwrite(os.path.join(debug_img_path, '%s_%07d.jpg' % (self.video_name, frame_i)), frame)
             
             unique, counts = np.unique(rclasses, return_counts=True)
@@ -180,7 +180,7 @@ class VideoLabeler():
         
         return trajectory
 
-    def generate_re3_trajectories(self, all_rbboxes=None, all_rclasses=None, threshold_IoU=0.5, save_images=False):
+    def generate_re3_trajectories(self, all_rbboxes=None, all_rclasses=None, threshold_IoU=0.7, save_images=False):
         frame_i = 0
 
         all_rbboxes = self.all_rbboxes if all_rbboxes is None else all_rbboxes
@@ -203,6 +203,15 @@ class VideoLabeler():
             # Process frame here
             rbboxes = all_rbboxes[frame_i]
             rclasses = all_rclasses[frame_i]
+
+            if save_images:
+                debug_img_path = os.path.join(self.config.save_debug_img_path, self.video_name, 'SSD')
+                if not os.path.exists(debug_img_path):
+                    os.makedirs(debug_img_path)
+                assert len(rbboxes) == len(rclasses)
+                bboxes_draw_on_img(frame, rclasses, [''] * len(rbboxes), rbboxes, colors_dark)
+                cv2.imwrite(os.path.join(debug_img_path, '%s_%07d.jpg' % (self.video_name, frame_i)), frame)
+
             rbboxes_in_frame_i = []
             rclasses_in_frame_i = []
 
@@ -226,7 +235,7 @@ class VideoLabeler():
 
                 # Remove tracks outside of crop zone
                 traj_rclass = traj_id.split('_')[0]
-                if not bbox_near_margin(denormed_tracked_bbox, self.config.img_dim)\
+                if not bbox_near_margin(denormed_tracked_bbox, self.config.img_dim, margin=10)\
                    and self.cropper.check_is_valid(traj_rclass, *tracked_bbox):
                     traj_ids_keep.append(traj_id)
                     rbboxes_in_frame_i.append(tracked_bbox)
@@ -256,7 +265,7 @@ class VideoLabeler():
                 if not os.path.exists(debug_img_path):
                     os.makedirs(debug_img_path)
                 assert len(rbboxes_in_frame_i) == len(rclasses_in_frame_i)
-                bboxes_draw_on_img(frame, rclasses_in_frame_i, traj_ids, rbboxes_in_frame_i, colors_tableau)
+                bboxes_draw_on_img(frame, rclasses_in_frame_i, traj_ids, rbboxes_in_frame_i, colors_original)
                 cv2.imwrite(os.path.join(debug_img_path, '%s_%07d.jpg' % (self.video_name, frame_i)), frame)
 
             frame_i += 1

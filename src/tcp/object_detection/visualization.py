@@ -24,6 +24,8 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import matplotlib.cm as mpcm
 
+import seaborn as sns
+
 
 # =========================================================================== #
 # Some colormaps.
@@ -45,6 +47,8 @@ colors_tableau = [(255, 255, 255), (31, 119, 180), (174, 199, 232), (255, 127, 1
                   (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),
                   (227, 119, 194), (247, 182, 210), (127, 127, 127), (199, 199, 199),
                   (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229)]
+colors_original = map(lambda x: tuple(int(i * 256) for i in x), sns.color_palette("hls", 21))
+colors_dark = map(lambda x: tuple(int(i * 256) for i in x), sns.hls_palette(21, l=.3, s=.8))
 
 
 # =========================================================================== #
