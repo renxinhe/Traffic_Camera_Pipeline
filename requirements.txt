@@ -1,0 +1,5 @@
+numpy
+scipy
+tensorflow-gpu
+opencv-python
+youtube-dl
