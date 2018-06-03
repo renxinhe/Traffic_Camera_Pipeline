@@ -12,7 +12,7 @@ To install all dependencies with pip, run the command
 pip install -r requirements.txt
 ```
 
-## Pre-trained Weights Download
+## Pre-trained Weights
 We recommend placing all model weights in a new directory named `Checkpoint`. Model weight variables can be set under `src/tcp/configs/*_config.py`.
 
 ### [Single Shot MultiBox Detector (SSD)](https://github.com/balancap/SSD-Tensorflow)
@@ -26,3 +26,17 @@ The `self.ssd_checkpoint_path` variable in config file should point to the "ckpt
 TCP uses Re3 to track vehicles and pedestrians. To obtain pre-trained weights, download the [model](https://gitlab.com/danielgordon10/re3-tensorflow#model) from the official Re3 repo. Place the unzipped contents (model.ckpt-0.\*) under `Checkpoint/Re3_checkpoint`.
 
 The `self.re3_checkpoint_dir` variable in config file should point to the directory where previously unzipped Re3 model files are placed.
+
+## Runnning Experiments
+TCP includes many experiment scripts in the repository, under directory "experiments".
+Before running any script, first build the package locally with
+
+```bash
+python setup.py develop
+```
+
+Scripts must be run from the repo's root directory. For example:
+
+```bash
+python experiments/label_traffic_video.py
+```
