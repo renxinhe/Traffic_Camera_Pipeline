@@ -1,5 +1,7 @@
 numpy
 scipy
+matplotlib
 tensorflow-gpu
 opencv-python
+seaborn
 youtube-dl
