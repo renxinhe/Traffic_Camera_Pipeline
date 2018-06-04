@@ -9,14 +9,12 @@ from gym_urbandriving.assets import Terrain, Lane, Street, Sidewalk,\
 
 
 class Config(object):
-###############PARAMETERS TO SWEEP##########
-
-
     def __init__(self):
-        ###STREAMING####
+        ### STREAMING ####
         self.STREAM_OUTPUT_SEGMENT_TIME_LIMIT = 60  # approximate length of video segments in seconds
         self.STREAM_OUTPUT_DIR_SIZE_LIMIT = 1e10    # maximum size limit for downloaded video in bytes
 
+        ### DETECTION ###
         self.ssd_checkpoint_path = 'Checkpoints/SSD_checkpoint/VGG_VOC0712_SSD_300x300_ft_iter_120000.ckpt'
         self.re3_checkpoint_dir = 'Checkpoints/Re3_checkpoint'
         self.video_root_dir = 'Videos'
@@ -27,7 +25,7 @@ class Config(object):
 
         self.homography_training_data = 'homography_training/'
 
-        ####REGISTRATION####
+        ### REGISTRATION ###
         self.street_corners = np.array([[765, 385],
                             [483, 470],
                             [1135, 565],
@@ -52,12 +50,12 @@ class Config(object):
 
         self.use_pedestrian = True
 
-        ####FILTERING#######
+        ### FILTERING ###
         self.time_limit = 100
         self.vz_time_horizon = None
 
-        #######LANES######
-        #######ENWS ########
+        ### LANES ###
+        ### ENWS ###
 
         self.lanes = [
             Lane(800, 550, 400, 100),                   #EAST OUT BOUND
@@ -65,7 +63,7 @@ class Config(object):
             Lane(550, 200, 400, 100, angle=(np.pi/2)),  #NORTH OUT BOUND
             Lane(450, 200, 400, 100, angle=-(np.pi/2)), #NORTH IN BOUND
             Lane(200, 450, 400, 100, angle=-np.pi),     #WEST OUT BOUND
-            Lane(200, 550, 400, 100),                   #WEST IN BOUND 
+            Lane(200, 550, 400, 100),                   #WEST IN BOUND
             Lane(450, 800, 400, 100, angle=-(np.pi/2)), #SOUTH OUT BOUND
             Lane(550, 800, 400, 100, angle=(np.pi/2))   #SOUTH IN BOUND
         ]

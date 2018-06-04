@@ -111,7 +111,12 @@ class VideoLabeler():
         self.all_rclasses = self.init_labeler.all_rclasses
         return self.all_rclasses, self.all_rbboxes
 
-    def generate_trajectories(self, all_rbboxes=None, all_rclasses=None, output_limit=None, num_skip_frames=1, save_images=False):
+    def generate_trajectories(self,
+                              all_rbboxes=None,
+                              all_rclasses=None,
+                              output_limit=None,
+                              num_skip_frames=1,
+                              save_images=False):
         frame_i = 0
         frame_skip = 0
 
@@ -128,7 +133,7 @@ class VideoLabeler():
                 break
 
             frame_skip += 1
-            
+
             assert num_skip_frames > 0 and int(num_skip_frames) == num_skip_frames
             frame_skip %= num_skip_frames
             if frame_skip != 0:
@@ -144,7 +149,7 @@ class VideoLabeler():
                     os.makedirs(debug_img_path)
                 bboxes_draw_on_img(frame, rclasses, [1.0] * len(rclasses), rbboxes, colors_dark)
                 cv2.imwrite(os.path.join(debug_img_path, '%s_%07d.jpg' % (self.video_name, frame_i)), frame)
-            
+
             unique, counts = np.unique(rclasses, return_counts=True)
             classes_counts = dict(zip(unique, counts))
             car_count = classes_counts.get(7)
@@ -170,24 +175,39 @@ class VideoLabeler():
 
             if self.config.use_pedestrian:
                 for ped_cord in ped_cords:
-                    current_frame.append(ped_cord)  
+                    current_frame.append(ped_cord)
 
             if len(current_frame) != 0:
                 trajectory.append(current_frame)
 
         print 'Done processing %d frames.' % (frame_i - 1)
         self.ssd_detector.cap.release()
-        
+
         return trajectory
 
-    def generate_re3_trajectories(self, all_rbboxes=None, all_rclasses=None, threshold_IoU=0.7, save_images=False):
+    def generate_re3_trajectories(self,
+                                  all_rbboxes=None,
+                                  all_rclasses=None,
+                                  threshold_IoU=0.7,
+                                  threshold_min_frames=30,
+                                  debug_pickle=False,
+                                  save_images=False):
         frame_i = 0
 
         all_rbboxes = self.all_rbboxes if all_rbboxes is None else all_rbboxes
         all_rclasses = self.all_rclasses if all_rclasses is None else all_rclasses
         assert len(all_rbboxes) == len(all_rclasses)
 
-        trajectory = []
+        if debug_pickle:
+            try:
+                trajectories_dict = pickle.load(open('{0}/{1}/{1}_trajectories.cpkl'.format(self.config.save_debug_pickles_path, self.video_name), 'r'))
+                print 'Loaded "{0}/{1}/{1}_trajectories.cpkl".'.format(self.config.save_debug_pickles_path, self.video_name)
+                return trajectories_dict
+            except IOError as e:
+                print 'Unable to load "{0}/{1}/{1}_trajectories.cpkl"'.format(self.config.save_debug_pickles_path, self.video_name)
+                print 'Running tracking network... This may take a while.'
+
+        trajectories_dict = {}
 
         tf.reset_default_graph()
         tracker = re3_tracker.Re3Tracker(self.config)
@@ -220,6 +240,12 @@ class VideoLabeler():
                 print '\nProcessing frame %d' % frame_i
             for traj_id in traj_ids:
                 tracked_bbox = tracker.track(traj_id, frame)
+
+                # Adding new bbox to output dictionary
+                trajectory_dict = trajectories_dict[traj_id]
+                trajectory_bboxes = trajectory_dict['bboxes']
+                trajectory_bboxes.append(tracked_bbox)
+
                 denormed_tracked_bbox = list(tracked_bbox)
                 # print 'tracker tracked_bbox', traj_id, tracked_bbox
                 tracked_bbox = normalize_bbox(tracked_bbox, self.config.img_dim)
@@ -242,7 +268,7 @@ class VideoLabeler():
                     rclasses_in_frame_i.append(traj_rclass)
             traj_ids = traj_ids_keep
             # print 'rbboxes', rbboxes
-            
+
             # Track new bboxes
             for i, rbbox in enumerate(rbboxes):
                 rclass = rclasses[i]
@@ -255,6 +281,8 @@ class VideoLabeler():
 
                 denormed_rbbox = denormalize_bbox(rbbox, self.config.img_dim)
                 # print 'new tracked_bbox', new_traj_id, denormed_rbbox
+                trajectories_dict[new_traj_id] = {'start_frame': frame_i,
+                                                  'bboxes': [denormed_rbbox]}
 
                 tracker.track(new_traj_id, frame, denormed_rbbox)
                 rbboxes_in_frame_i.append(rbbox)
@@ -269,6 +297,11 @@ class VideoLabeler():
                 cv2.imwrite(os.path.join(debug_img_path, '%s_%07d.jpg' % (self.video_name, frame_i)), frame)
 
             frame_i += 1
+
+        for traj_id, trajectory_dict in trajectories_dict.items():
+            if len(trajectory_dict['bboxes']) < threshold_min_frames:
+                del(trajectories_dict[traj_id])
+        return trajectories_dict
 
 
     def get_car_cords(self, frame_i, rclasses, rbboxes):
