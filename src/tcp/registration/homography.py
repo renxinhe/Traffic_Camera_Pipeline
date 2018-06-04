@@ -20,12 +20,12 @@ class Homography():
     def __init__(self,config):
 
         '''
-        Initilization for Regristration Class 
+        Initilization for Regristration Class
 
         Parameters
         -------------
         config: Config
-        configuration class for traffic intersection 
+        configuration class for traffic intersection
 
         '''
 
@@ -57,7 +57,7 @@ class Homography():
 
     def determine_lane(self,point):
         '''
-        Detemines the lane the current trajectory is on 
+        Detemines the lane the current trajectory is on
         both the index of the lane and the side of the road
 
         Parameters
@@ -71,7 +71,7 @@ class Homography():
 
         '''
 
-        for i in range(len(self.config.lanes)): 
+        for i in range(len(self.config.lanes)):
 
             lane = self.config.lanes[i]
 
@@ -79,7 +79,7 @@ class Homography():
                 side = lane.side_of_road(point)
                 return {'lane_index':i, 'road_side':side}
 
-            
+
         return None
 
 
@@ -87,17 +87,17 @@ class Homography():
         img_warped = warp(img, self.tf_mat, output_shape = (800, 800),order=0)
         # cv2.imshow('Test Homography', img_warped)
         # cv2.waitKey(30)
-        
+
         return img_warped
 
 
     def is_near_edge(self,y):
 
         dist = np.abs(self.config.img_dim[1] - y)
-        
-        if dist < 15: 
+
+        if dist < 15:
             return True
-        else: 
+        else:
             return False
 
 
@@ -124,14 +124,14 @@ class Homography():
             new_frame = []
 
             for obj_dict in frame:
-                x = self.config.img_dim[0] * obj_dict['x'] 
+                x = self.config.img_dim[0] * obj_dict['x']
                 y = self.config.img_dim[1] * obj_dict['y']
 
                 cam_pose = np.array([x,y])
-                
 
 
-                
+
+
                 offset_pose = self.af.add_offset(cam_pose)
 
                 #offset_pose = cam_pose
@@ -148,38 +148,47 @@ class Homography():
 
                 new_frame.append(new_obj_dict)
 
-            if len(new_frame) > 0: 
+            if len(new_frame) > 0:
                 tf_traj.append(new_frame)
 
         return tf_traj
 
+    def transform_points(self, points):
+        xs = map(lambda p:p[0], points)
+        ys = map(lambda p:p[1], points)
+
+        poses = []
+        for i in range(len(xs)):
+            cam_pose = np.array([xs[i], ys[i]])
+            offset_pose = self.af.add_offset(cam_pose)
+            pose = self.tf_mat.inverse(offset_pose)[0]
+            poses.append(pose)
+        return poses
 
 
-##########TEST CASES FOR HOMOGRAPHY CLASS 
+##########TEST CASES FOR HOMOGRAPHY CLASS
 
 def test_homography(hm):
     ''''
     Tests if the fitted matrix matches the training point
     '''
-  
+
     for i in range(4):
 
         point = hm.config.street_corners[i,:]
         x,y = point
-        
+
         tx, ty = hm.tf_mat.__call__(np.array((x, y)))[0]
 
-       
+
 
 def test_camera_point(hm, trajectory):
     ''''
-    Plots a trajectory on the driving simulator 
+    Plots a trajectory on the driving simulator
     '''
-  
+
     for frame in trajectory:
         for obj_dict in frame:
-            x = int(hm.config.img_dim[0] * obj_dict['x']) 
+            x = int(hm.config.img_dim[0] * obj_dict['x'])
             y = int(hm.config.img_dim[1] * obj_dict['y'])
             hm.vz_debug.visualize_camera_point(x, y, obj_dict['t'])
-
-

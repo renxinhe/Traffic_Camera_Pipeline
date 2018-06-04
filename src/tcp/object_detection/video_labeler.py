@@ -189,7 +189,7 @@ class VideoLabeler():
                                   all_rbboxes=None,
                                   all_rclasses=None,
                                   threshold_IoU=0.7,
-                                  threshold_min_frames=30,
+                                  threshold_min_frames=90,
                                   debug_pickle=False,
                                   save_images=False):
         frame_i = 0

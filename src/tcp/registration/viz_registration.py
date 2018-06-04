@@ -1,17 +1,17 @@
 import sys, os
-import gym
-import gym_urbandriving as uds
+from math import sqrt
 import cProfile
 import time
 import numpy as np
 import pickle
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 import skimage.transform
 import cv2
 import IPython
 from random import shuffle
-
-from gym_urbandriving.agents import NullAgent, TrafficLightAgent
-from gym_urbandriving.assets import Car, TrafficLight
 
 import seaborn as sns
 
@@ -20,7 +20,7 @@ import seaborn as sns
 class VizRegistration():
 
     def __init__(self,cnfg):
-        ''' 
+        '''
         Initialize the VizRegristation Class
 
         Parameters
@@ -35,7 +35,7 @@ class VizRegistration():
 
     def load_frames(self, video_name, time_limit):
         '''
-        Load label images to be plotted 
+        Load label images to be plotted
         '''
         self.imgs = []
         for i in range(time_limit):
@@ -72,7 +72,7 @@ class VizRegistration():
 
     def get_color_template(self):
         ''''
-        Returns a spectrum of colors that intrepret between two different spectrums 
+        Returns a spectrum of colors that intrepret between two different spectrums
         The goal is to have unique color for each trajectories
         '''
 
@@ -95,14 +95,14 @@ class VizRegistration():
                     continue
 
                 if t == traj.initial_time_step:
-                    color_match = {'trajectory': traj, 
+                    color_match = {'trajectory': traj,
                                    'color_template': color_template[color_index]}
                     active_trajectories.append(color_match)
                     color_index += 1
                     if color_index == len(color_template):
                         color_index %= len(color_template)
                         shuffle(color_template)
-            
+
             way_points_t = []
             for traj_index, traj in enumerate(active_trajectories):
                 traj = traj['trajectory']
@@ -116,7 +116,7 @@ class VizRegistration():
                         w_p = (pose, active_trajectories[traj_index]['color_template'])
                         way_points_t.append(w_p)
             way_points.append(way_points_t)
-            
+
         return np.array(way_points)[1:last_valid_t]
 
     def visualize_trajectory_dots(self, trajectories, filter_class=None, plot_traffic_images=False, video_name=None, animate=False):
@@ -125,11 +125,11 @@ class VizRegistration():
 
         Parameter
         ------------
-        trajectories: list of Trajectory 
+        trajectories: list of Trajectory
         A list of Trajectory Class
 
         plot_traffic_images: bool
-        True if the images from the traffic cam should be shown alongside the simulator 
+        True if the images from the traffic cam should be shown alongside the simulator
         '''
         self.initalize_simulator()
 
@@ -168,7 +168,7 @@ class VizRegistration():
         return
 
     def visualize_homography_points(self,hm):
-        ''' 
+        '''
         Plot the correspnding homography ponts
         Assumes load_frames has been called
         '''
@@ -183,7 +183,7 @@ class VizRegistration():
             img[point[1]-5:point[1]+5,point[0]-5:point[0]+5,:]=255
 
         img = hm.apply_homography_on_img(img)
-        
+
 
         waypoints = []
 
@@ -192,5 +192,51 @@ class VizRegistration():
             waypoints.append([point,(0,255,0)])
 
         while True:
-            self.env._render(waypoints = waypoints,transparent_surface = img)     
-            
+            self.env._render(waypoints = waypoints,transparent_surface = img)
+
+    '''
+    Plot points on an intersection grid.
+
+    Parameters
+    ----------
+    points: a list of (x,y) tuples
+    '''
+    def visualize_points(self, points):
+        xs, ys = zip(*points)
+        plt.figure(figsize=(8, 8))
+        axes = plt.gca()
+        axes.set_xlim([-100,1100])
+        axes.set_ylim([-100,1100])
+        plt.gca().invert_yaxis()
+
+        plt.plot([400, 400], [0, 1000], color='k')
+        plt.plot([500, 500], [0, 1000], color='k')
+        plt.plot([600, 600], [0, 1000], color='k')
+
+        plt.plot([0, 1000], [400, 400], color='k')
+        plt.plot([0, 1000], [500, 500], color='k')
+        plt.plot([0, 1000], [600, 600], color='k')
+
+        plt.scatter(xs, ys, c='r', marker='.')
+        plt.show()
+
+    '''
+    Plot speed plot of a trajectory of points.
+    We assume that the points are equally spaced in time. In other words,
+    the original video should not exhibit frame skip or fluctuating framerate.
+
+    Parameters
+    ----------
+    points: a list of (x,y) tuples
+    '''
+    def visualize_speed(self, points):
+        def distance(p1, p2):
+            return sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
+
+        distances = []
+        for i in range(len(points) - 1):
+            distances.append(distance(points[i], points[i + 1]))
+
+        t = np.arange(0, (len(points)) / 30.0, 1.0 / 30.0)[:len(points) - 1]
+        plt.plot(t, distances)
+        plt.show()
