@@ -85,8 +85,8 @@ class Homography():
 
     def apply_homography_on_img(self, img):
         img_warped = warp(img, self.tf_mat, output_shape = (800, 800),order=0)
-        # cv2.imshow('Test Homography', img_warped)
-        # cv2.waitKey(30)
+        cv2.imshow('Test Homography', img_warped)
+        cv2.waitKey(0)
 
         return img_warped
 
