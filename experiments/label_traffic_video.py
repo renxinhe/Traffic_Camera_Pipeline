@@ -1,9 +1,11 @@
 from __future__ import unicode_literals
 
-import os, sys
+import os, sys, time
 
 from tcp.object_detection.video_labeler import VideoLabeler
 from tcp.configs.alberta_config import Config
+
+import numpy as np
 import cPickle as pickle
 import glob
 
@@ -15,6 +17,7 @@ VIDEO_FILE = '%s/*.mp4' % cnfg.video_root_dir
 videos = glob.glob(VIDEO_FILE)
 
 ###LABEL VIDEOS
+re3_times = []
 for video_path in sorted(videos):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
@@ -42,11 +45,16 @@ for video_path in sorted(videos):
     # camera_view_trajectory = vl.generate_trajectories()
 
     # Run object tracking: Re3
-    camera_view_trajectories = vl.generate_re3_trajectories(debug_pickle=True, save_images=True)
+    timestamp = time.time()
+    camera_view_trajectories = vl.generate_re3_trajectories(debug_pickle=False, save_images=False)
+    re3_times.append(time.time() - timestamp)
     with open('{0}/{1}/{1}_trajectories.cpkl'.format(cnfg.save_debug_pickles_path, video_name),'wb+') as trajectory_file:
         pickle.dump(camera_view_trajectories, trajectory_file)
 
     vl.close_video()
     # raw_input('\nPress enter to continue...\n')
 
+print 'Mean (s)', np.mean(re3_times)
+print 'Std (s)', np.std(re3_times)
+print re3_times
 print 'End of labeling'
